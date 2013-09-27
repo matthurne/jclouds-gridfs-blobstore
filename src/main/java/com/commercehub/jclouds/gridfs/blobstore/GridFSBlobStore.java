@@ -1,10 +1,14 @@
 package com.commercehub.jclouds.gridfs.blobstore;
 
 import com.google.common.base.Supplier;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.gridfs.GridFS;
+import com.mongodb.gridfs.GridFSInputFile;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.domain.Blob;
@@ -19,6 +23,8 @@ import org.jclouds.blobstore.options.PutOptions;
 import org.jclouds.blobstore.util.BlobUtils;
 import org.jclouds.collect.Memoized;
 import org.jclouds.domain.Location;
+import org.jclouds.io.ContentMetadata;
+import org.jclouds.io.Payload;
 import org.jclouds.javax.annotation.Nullable;
 import org.jclouds.providers.ProviderMetadata;
 
@@ -29,6 +35,8 @@ import java.util.List;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.commercehub.jclouds.gridfs.blobstore.Util.parseGridFSIdentifier;
+import static com.commercehub.jclouds.gridfs.blobstore.Util.parseServerAddresses;
 
 public class GridFSBlobStore implements BlobStore {
     // TODO: check if there's stuff from BaseBlobStore we want
@@ -46,7 +54,7 @@ public class GridFSBlobStore implements BlobStore {
         this.defaultLocation = checkNotNull(defaultLocation, "defaultLocation");
         this.locations = checkNotNull(locations, "locations");
 
-        List<ServerAddress> addresses = Util.parseServerAddresses(providerMetadata.getEndpoint());
+        List<ServerAddress> addresses = parseServerAddresses(providerMetadata.getEndpoint());
         List<MongoCredential> credentials = new ArrayList<>(); // TODO support credentials
         MongoClientOptions options = MongoClientOptions.builder().build(); // TODO support options configuration
         if (addresses.size() > 1) {
@@ -120,7 +128,7 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public void deleteContainer(String container) {
-        Util.parseGridFSIdentifier(container).dropStoreCollections(mongo);
+        parseGridFSIdentifier(container).dropStoreCollections(mongo);
     }
 
     @Override
@@ -130,7 +138,7 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public boolean containerExists(String container) {
-        return Util.parseGridFSIdentifier(container).storeExists(mongo);
+        return parseGridFSIdentifier(container).storeExists(mongo);
     }
 
     @Override
@@ -144,7 +152,7 @@ public class GridFSBlobStore implements BlobStore {
         if (options != null && options.isPublicRead()) {
             throw new IllegalArgumentException("public read is not supported by this provider");
         }
-        GridFSIdentifier gridFSIdentifier = Util.parseGridFSIdentifier(container);
+        GridFSIdentifier gridFSIdentifier = parseGridFSIdentifier(container);
         if (gridFSIdentifier.storeExists(mongo)) {
             return false;
         }
@@ -160,17 +168,30 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public boolean blobExists(String container, String name) {
-        return false;  // TODO: implement
+        return parseGridFSIdentifier(container).connect(mongo).findOne(name) != null;
     }
 
     @Override
     public String putBlob(String container, Blob blob) {
-        return null;  // TODO: implement
+        return putBlob(container, blob, PutOptions.Builder.multipart());
     }
 
     @Override
     public String putBlob(String container, Blob blob, PutOptions options) {
-        return null;  // TODO: implement
+        if (options != null && !options.isMultipart()) {
+            throw new IllegalArgumentException("only multipart is supported by this provider");
+        }
+        Payload payload = checkNotNull(blob.getPayload());
+        BlobMetadata metadata = blob.getMetadata();
+        ContentMetadata contentMetadata = metadata.getContentMetadata();
+        GridFS gridFS = parseGridFSIdentifier(container).connect(mongo);
+        GridFSInputFile inputFile = gridFS.createFile(payload.getInput(), metadata.getName(), true);
+        inputFile.setContentType(contentMetadata.getContentType());
+        DBObject fileMetadata = new BasicDBObject();
+        fileMetadata.putAll(metadata.getUserMetadata());
+        inputFile.setMetaData(fileMetadata);
+        inputFile.save();
+        return inputFile.getMD5();
     }
 
     @Override
@@ -185,6 +206,6 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public void removeBlob(String container, String name) {
-        // TODO: implement
+        parseGridFSIdentifier(container).connect(mongo).remove(name);
     }
 }
