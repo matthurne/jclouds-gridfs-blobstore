@@ -1,4 +1,4 @@
-package com.commercehub.jclouds.gridfs.blobstore.config;
+package com.commercehub.jclouds.gridfs.blobstore;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.jclouds.blobstore.AsyncBlobStore;

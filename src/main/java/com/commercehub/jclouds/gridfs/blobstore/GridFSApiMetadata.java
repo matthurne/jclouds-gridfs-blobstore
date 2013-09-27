@@ -1,6 +1,5 @@
 package com.commercehub.jclouds.gridfs.blobstore;
 
-import com.commercehub.jclouds.gridfs.blobstore.config.GridFSBlobStoreContextModule;
 import com.google.inject.Module;
 import com.mongodb.Mongo;
 import org.jclouds.apis.ApiMetadata;

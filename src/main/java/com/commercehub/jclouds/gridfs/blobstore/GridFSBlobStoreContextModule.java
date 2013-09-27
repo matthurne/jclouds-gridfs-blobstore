@@ -1,6 +1,5 @@
-package com.commercehub.jclouds.gridfs.blobstore.config;
+package com.commercehub.jclouds.gridfs.blobstore;
 
-import com.commercehub.jclouds.gridfs.blobstore.GridFSBlobStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import org.jclouds.blobstore.AsyncBlobStore;
