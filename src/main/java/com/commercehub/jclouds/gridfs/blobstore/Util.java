@@ -1,6 +1,7 @@
 package com.commercehub.jclouds.gridfs.blobstore;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.gridfs.GridFS;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -20,5 +21,12 @@ class Util {
             addresses.add(parseServerAddress(address));
         }
         return addresses;
+    }
+
+    static GridFSIdentifier parseGridFSIdentifier(String container) {
+        String[] parts = container.split("/");
+        String dbName = parts[0];
+        String bucket = parts.length > 1 ? parts[1] : GridFS.DEFAULT_BUCKET;
+        return new GridFSIdentifier(dbName, bucket);
     }
 }

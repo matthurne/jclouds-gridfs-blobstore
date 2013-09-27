@@ -1,18 +1,17 @@
 package com.commercehub.jclouds.gridfs.blobstore;
 
 import com.google.common.base.Supplier;
-import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.gridfs.GridFS;
+import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.domain.Blob;
+import org.jclouds.blobstore.domain.BlobBuilder;
 import org.jclouds.blobstore.domain.BlobMetadata;
 import org.jclouds.blobstore.domain.PageSet;
 import org.jclouds.blobstore.domain.StorageMetadata;
-import org.jclouds.blobstore.internal.BaseBlobStore;
 import org.jclouds.blobstore.options.CreateContainerOptions;
 import org.jclouds.blobstore.options.GetOptions;
 import org.jclouds.blobstore.options.ListContainerOptions;
@@ -29,12 +28,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class GridFSBlobStore extends BaseBlobStore {
-    private final MongoClient mongo;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class GridFSBlobStore implements BlobStore {
+    // TODO: check if there's stuff from BaseBlobStore we want
+    protected final BlobStoreContext context;
+    protected final BlobUtils blobUtils;
+    protected final Supplier<Location> defaultLocation;
+    protected final Supplier<Set<? extends Location>> locations;
+    protected final MongoClient mongo;
 
     @Inject
     protected GridFSBlobStore(ProviderMetadata providerMetadata, BlobStoreContext context, BlobUtils blobUtils, Supplier<Location> defaultLocation, @Memoized Supplier<Set<? extends Location>> locations) throws UnknownHostException {
-        super(context, blobUtils, defaultLocation, locations);
+        // TODO: remove anything not needed
+        this.context = checkNotNull(context, "context");
+        this.blobUtils = checkNotNull(blobUtils, "blobUtils");
+        this.defaultLocation = checkNotNull(defaultLocation, "defaultLocation");
+        this.locations = checkNotNull(locations, "locations");
+
         List<ServerAddress> addresses = Util.parseServerAddresses(providerMetadata.getEndpoint());
         List<MongoCredential> credentials = new ArrayList<>(); // TODO support credentials
         MongoClientOptions options = MongoClientOptions.builder().build(); // TODO support options configuration
@@ -47,18 +58,69 @@ public class GridFSBlobStore extends BaseBlobStore {
         }
     }
 
-    private GridFS getGridFS(String container) {
-        String[] parts = container.split("/");
-        String dbName = parts[0];
-        String bucket = parts.length > 1 ? parts[1] : GridFS.DEFAULT_BUCKET;
-        DB db = mongo.getDB(dbName);
-        // TODO: cache instances
-        return new GridFS(db, bucket);
+    @Override
+    public BlobStoreContext getContext() {
+        return context;
     }
 
     @Override
-    protected boolean deleteAndVerifyContainerGone(String container) {
+    public BlobBuilder blobBuilder(String name) {
+        return blobUtils.blobBuilder().name(name);
+    }
+
+    @Override
+    public Set<? extends Location> listAssignableLocations() {
+        return locations.get();
+    }
+
+    @Override
+    public PageSet<? extends StorageMetadata> list(String container) {
+        return null;  // TODO: implement
+    }
+
+    @Override
+    public void clearContainer(String container) {
+        // TODO: implement
+    }
+
+    @Override
+    public void clearContainer(String container, ListContainerOptions options) {
+        // TODO: implement
+    }
+
+    @Override
+    public boolean directoryExists(String container, String directory) {
         return false;  // TODO: implement
+    }
+
+    @Override
+    public void createDirectory(String container, String directory) {
+        // TODO: implement
+    }
+
+    @Override
+    public void deleteDirectory(String containerName, String name) {
+        // TODO: implement
+    }
+
+    @Override
+    public Blob getBlob(String container, String name) {
+        return null;  // TODO: implement
+    }
+
+    @Override
+    public long countBlobs(String container) {
+        return 0;  // TODO: implement
+    }
+
+    @Override
+    public long countBlobs(String container, ListContainerOptions options) {
+        return 0;  // TODO: implement
+    }
+
+    @Override
+    public void deleteContainer(String container) {
+        Util.parseGridFSIdentifier(container).dropStoreCollections(mongo);
     }
 
     @Override
@@ -68,17 +130,26 @@ public class GridFSBlobStore extends BaseBlobStore {
 
     @Override
     public boolean containerExists(String container) {
-        return false;  // TODO: implement
+        return Util.parseGridFSIdentifier(container).storeExists(mongo);
     }
 
     @Override
     public boolean createContainerInLocation(@Nullable Location location, String container) {
-        return false;  // TODO: implement
+        return createContainerInLocation(location, container, CreateContainerOptions.NONE);
     }
 
     @Override
     public boolean createContainerInLocation(@Nullable Location location, String container, CreateContainerOptions options) {
-        return false;  // TODO: implement
+        if (options != null && options.isPublicRead()) {
+            throw new IllegalArgumentException("public read is not supported by this provider");
+        }
+        GridFSIdentifier gridFSIdentifier = Util.parseGridFSIdentifier(container);
+        if (gridFSIdentifier.storeExists(mongo)) {
+            return false;
+        }
+        // TODO: cache
+        gridFSIdentifier.connect(mongo);
+        return true;
     }
 
     @Override
