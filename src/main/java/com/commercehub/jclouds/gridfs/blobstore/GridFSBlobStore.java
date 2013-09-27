@@ -140,6 +140,7 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public boolean createContainerInLocation(@Nullable Location location, String container, CreateContainerOptions options) {
+        // TODO: consider using locations
         if (options != null && options.isPublicRead()) {
             throw new IllegalArgumentException("public read is not supported by this provider");
         }
