@@ -8,9 +8,11 @@ import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.gridfs.GridFS;
+import com.mongodb.gridfs.GridFSDBFile;
 import com.mongodb.gridfs.GridFSInputFile;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
+import org.jclouds.blobstore.ContainerNotFoundException;
 import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.blobstore.domain.BlobBuilder;
 import org.jclouds.blobstore.domain.BlobMetadata;
@@ -34,24 +36,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.commercehub.jclouds.gridfs.blobstore.Util.parseGridFSIdentifier;
 import static com.commercehub.jclouds.gridfs.blobstore.Util.parseServerAddresses;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class GridFSBlobStore implements BlobStore {
     // TODO: check if there's stuff from BaseBlobStore we want
-    protected final BlobStoreContext context;
-    protected final BlobUtils blobUtils;
-    protected final Supplier<Location> defaultLocation;
-    protected final Supplier<Set<? extends Location>> locations;
-    protected final MongoClient mongo;
+    private final BlobStoreContext context;
+    private final BlobUtils blobUtils;
+    private final Supplier<Location> defaultLocation;
+    private final Supplier<Set<? extends Location>> locations;
+    private final MongoClient mongo;
+    private final DBFileToBlob dbFileToBlob;
+    private final DBFileToBlobMetadata dbFileToBlobMetadata;
 
     @Inject
-    protected GridFSBlobStore(ProviderMetadata providerMetadata, BlobStoreContext context, BlobUtils blobUtils, Supplier<Location> defaultLocation, @Memoized Supplier<Set<? extends Location>> locations) throws UnknownHostException {
+    protected GridFSBlobStore(ProviderMetadata providerMetadata, BlobStoreContext context, BlobUtils blobUtils, Supplier<Location> defaultLocation, DBFileToBlob dbFileToBlob, DBFileToBlobMetadata dbFileToBlobMetadata, @Memoized Supplier<Set<? extends Location>> locations) throws UnknownHostException {
         // TODO: remove anything not needed
         this.context = checkNotNull(context, "context");
         this.blobUtils = checkNotNull(blobUtils, "blobUtils");
         this.defaultLocation = checkNotNull(defaultLocation, "defaultLocation");
+        this.dbFileToBlob = dbFileToBlob;
+        this.dbFileToBlobMetadata = dbFileToBlobMetadata;
         this.locations = checkNotNull(locations, "locations");
 
         List<ServerAddress> addresses = parseServerAddresses(providerMetadata.getEndpoint());
@@ -109,11 +115,6 @@ public class GridFSBlobStore implements BlobStore {
     @Override
     public void deleteDirectory(String containerName, String name) {
         // TODO: implement
-    }
-
-    @Override
-    public Blob getBlob(String container, String name) {
-        return null;  // TODO: implement
     }
 
     @Override
@@ -200,8 +201,25 @@ public class GridFSBlobStore implements BlobStore {
     }
 
     @Override
+    public Blob getBlob(String container, String name) {
+        return getBlob(container, name, GetOptions.NONE);
+    }
+
+    @Override
     public Blob getBlob(String container, String name, GetOptions options) {
-        return null;  // TODO: implement
+        GridFSIdentifier identifier = parseGridFSIdentifier(container);
+        if (!identifier.storeExists(mongo)) {
+            throw new ContainerNotFoundException(container, "could not find expected collections in database");
+        }
+        GridFS gridFS = identifier.connect(mongo); // TODO: cache
+        // TODO: handle options
+        GridFSDBFile dbFile = gridFS.findOne(name);
+        if (dbFile == null) {
+            return null;
+        }
+        Blob blob = dbFileToBlob.apply(dbFile);
+        blob.getMetadata().setContainer(container);
+        return blob;
     }
 
     @Override

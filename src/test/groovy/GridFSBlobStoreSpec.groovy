@@ -4,6 +4,8 @@ import org.jclouds.Constants
 import org.jclouds.ContextBuilder
 import org.jclouds.blobstore.BlobStore
 import org.jclouds.blobstore.BlobStoreContext
+import org.jclouds.blobstore.ContainerNotFoundException
+import org.jclouds.blobstore.domain.StorageType
 import org.jclouds.blobstore.options.CreateContainerOptions
 import org.jclouds.blobstore.options.PutOptions
 import spock.lang.Shared
@@ -15,6 +17,8 @@ class GridFSBlobStoreSpec extends Specification {
     private static final CONTAINER = "${DB_NAME}/${BUCKET}"
     private static final BLOB_NAME = "JabbaTheHutt"
     private static final PAYLOAD = "Random data"
+    private static final PAYLOAD_MD5 = "fd6073b6d8ba3a3c1ab5316b9c79e12b"
+    private static final CONTENT_TYPE = "text/plain"
 
     @Shared
     private Mongo mongo
@@ -87,7 +91,7 @@ class GridFSBlobStoreSpec extends Specification {
 
         expect:
         def payload = blobStore.blobBuilder(BLOB_NAME).payload(PAYLOAD).build()
-        blobStore.putBlob(CONTAINER, payload) == "fd6073b6d8ba3a3c1ab5316b9c79e12b"
+        blobStore.putBlob(CONTAINER, payload) == PAYLOAD_MD5
         blobStore.blobExists(CONTAINER, BLOB_NAME)
 
         when:
@@ -102,7 +106,7 @@ class GridFSBlobStoreSpec extends Specification {
 
         expect:
         def payload = blobStore.blobBuilder(BLOB_NAME).payload(PAYLOAD).build()
-        blobStore.putBlob(CONTAINER, payload, PutOptions.Builder.multipart()) == "fd6073b6d8ba3a3c1ab5316b9c79e12b"
+        blobStore.putBlob(CONTAINER, payload, PutOptions.Builder.multipart()) == PAYLOAD_MD5
         blobStore.blobExists(CONTAINER, BLOB_NAME)
 
         when:
@@ -128,5 +132,66 @@ class GridFSBlobStoreSpec extends Specification {
         then:
         def e = thrown(IllegalArgumentException)
         e.message.contains("only multipart is supported")
+    }
+
+    def "get from non-existent container throws exception"() {
+        when:
+        blobStore.getBlob("containerDoesNotExist", "blobDoesNotExist")
+
+        then:
+        thrown(ContainerNotFoundException)
+    }
+
+    def "get non-existent blob returns null"() {
+        expect:
+        blobStore.getBlob(CONTAINER, "blobDoesNotExist") == null
+    }
+
+    def "can retrieve blob without get options"() {
+        when:
+        def payload = blobStore.blobBuilder(BLOB_NAME).payload(PAYLOAD).contentType(CONTENT_TYPE)
+                .userMetadata([user: "joe", type: "profilePicture"]).build()
+        blobStore.putBlob(CONTAINER, payload)
+        def blob = blobStore.getBlob(CONTAINER, BLOB_NAME)
+
+        then:
+        blob != null
+
+        blob.allHeaders != null && blob.allHeaders.isEmpty()
+        blob.metadata != null
+        blob.metadata.container == CONTAINER
+        blob.metadata.contentMetadata != null
+        blob.metadata.contentMetadata.contentDisposition == null
+        blob.metadata.contentMetadata.contentEncoding == null
+        blob.metadata.contentMetadata.contentLanguage == null
+        blob.metadata.contentMetadata.contentLength == PAYLOAD.length()
+        blob.metadata.contentMetadata.contentMD5 == null
+        blob.metadata.contentMetadata.contentType == CONTENT_TYPE
+        blob.metadata.contentMetadata.expires == null
+        blob.metadata.creationDate == null
+        blob.metadata.ETag == PAYLOAD_MD5
+        blob.metadata.lastModified != null
+        blob.metadata.name == BLOB_NAME
+        blob.metadata.providerId == null
+        blob.metadata.publicUri == null
+        blob.metadata.type == StorageType.BLOB
+        blob.metadata.uri == null
+        blob.metadata.userMetadata == [user: "joe", type: "profilePicture"]
+
+        blob.payload != null
+        blob.payload.contentMetadata != null
+        blob.payload.contentMetadata.contentDisposition == null
+        blob.payload.contentMetadata.contentEncoding == null
+        blob.payload.contentMetadata.contentLanguage == null
+        blob.payload.contentMetadata.contentLength == PAYLOAD.length()
+        blob.payload.contentMetadata.contentMD5 == null
+        blob.payload.contentMetadata.contentType == CONTENT_TYPE
+        blob.payload.contentMetadata.expires == null
+        blob.payload.input.text == PAYLOAD
+
+        cleanup:
+        blob.payload.release()
+
+        // TODO: test get options
     }
 }
