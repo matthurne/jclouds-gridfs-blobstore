@@ -14,8 +14,19 @@ class GridFSIdentifier {
     }
 
     boolean storeExists(Mongo mongo) {
-        DB db = getDB(mongo);
-        return db.collectionExists(getFilesCollectionName()) && db.collectionExists(getChunksCollectionName());
+        boolean hasFilesCollection = false;
+        boolean hasChunksCollection = false;
+        String filesCollectionName = getFilesCollectionName();
+        String chunksCollectionName = getChunksCollectionName();
+        for (String collectionName : getDB(mongo).getCollectionNames()) {
+            if (filesCollectionName.equalsIgnoreCase(collectionName)) {
+                hasFilesCollection = true;
+            }
+            if (chunksCollectionName.equalsIgnoreCase(collectionName)) {
+                hasChunksCollection = true;
+            }
+        }
+        return hasFilesCollection && hasChunksCollection;
     }
 
     GridFS connect(Mongo mongo) {
