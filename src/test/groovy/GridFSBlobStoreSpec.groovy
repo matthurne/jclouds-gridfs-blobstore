@@ -7,6 +7,7 @@ import org.jclouds.blobstore.BlobStoreContext
 import org.jclouds.blobstore.ContainerNotFoundException
 import org.jclouds.blobstore.domain.StorageType
 import org.jclouds.blobstore.options.CreateContainerOptions
+import org.jclouds.blobstore.options.GetOptions
 import org.jclouds.blobstore.options.PutOptions
 import spock.lang.Shared
 import spock.lang.Specification
@@ -191,7 +192,37 @@ class GridFSBlobStoreSpec extends Specification {
 
         cleanup:
         blob.payload.release()
+    }
 
-        // TODO: test get options
+    def "get options not supported"() {
+        when:
+        blobStore.getBlob(CONTAINER, BLOB_NAME, GetOptions.Builder.ifETagDoesntMatch(PAYLOAD_MD5))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        blobStore.getBlob(CONTAINER, BLOB_NAME, GetOptions.Builder.ifETagMatches(PAYLOAD_MD5))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        blobStore.getBlob(CONTAINER, BLOB_NAME, GetOptions.Builder.ifModifiedSince(new Date()))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        blobStore.getBlob(CONTAINER, BLOB_NAME, GetOptions.Builder.ifUnmodifiedSince(new Date()))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        blobStore.getBlob(CONTAINER, BLOB_NAME, GetOptions.Builder.range(0, 100))
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }

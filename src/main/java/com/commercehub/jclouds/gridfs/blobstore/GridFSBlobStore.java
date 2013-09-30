@@ -211,8 +211,15 @@ public class GridFSBlobStore implements BlobStore {
         if (!identifier.storeExists(mongo)) {
             throw new ContainerNotFoundException(container, "could not find expected collections in database");
         }
+        // TODO: support get options
+        if (options != null && (
+                    options.getIfMatch() != null || options.getIfNoneMatch() != null ||
+                    options.getIfModifiedSince() != null || options.getIfUnmodifiedSince() != null ||
+                    !options.getRanges().isEmpty()
+                ) ) {
+            throw new IllegalArgumentException("Get options are not currently supported by this provider");
+        }
         GridFS gridFS = identifier.connect(mongo); // TODO: cache
-        // TODO: handle options
         GridFSDBFile dbFile = gridFS.findOne(name);
         if (dbFile == null) {
             return null;
