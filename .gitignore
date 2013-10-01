@@ -4,4 +4,3 @@ out/
 *.iml
 *.ipr
 *.iws
-gradle.properties
