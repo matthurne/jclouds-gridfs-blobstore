@@ -8,6 +8,7 @@ import org.jclouds.blobstore.ContainerNotFoundException
 import org.jclouds.blobstore.domain.StorageType
 import org.jclouds.blobstore.options.CreateContainerOptions
 import org.jclouds.blobstore.options.GetOptions
+import org.jclouds.blobstore.options.ListContainerOptions
 import org.jclouds.blobstore.options.PutOptions
 import spock.lang.Shared
 import spock.lang.Specification
@@ -224,5 +225,70 @@ class GridFSBlobStoreSpec extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def "list not supported"() {
+        when:
+        blobStore.list()
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        blobStore.list(CONTAINER)
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        blobStore.list(CONTAINER, ListContainerOptions.NONE)
+        then:
+        thrown(UnsupportedOperationException)
+    }
+
+    def "clearContainer not supported"() {
+        when:
+        blobStore.clearContainer(CONTAINER)
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        blobStore.clearContainer(CONTAINER, ListContainerOptions.NONE)
+        then:
+        thrown(UnsupportedOperationException)
+    }
+
+    def "directory operations not supported"() {
+        when:
+        blobStore.createDirectory(CONTAINER, "myDirectory")
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        blobStore.deleteDirectory(CONTAINER, "myDirectory")
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        blobStore.directoryExists(CONTAINER, "myDirectory")
+        then:
+        thrown(UnsupportedOperationException)
+    }
+
+    def "blobMetadata not supported"() {
+        when:
+        blobStore.blobMetadata(CONTAINER, BLOB_NAME)
+        then:
+        thrown(UnsupportedOperationException)
+    }
+
+    def "countBlobs not supported"() {
+        when:
+        blobStore.countBlobs(CONTAINER)
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        blobStore.countBlobs(CONTAINER, ListContainerOptions.NONE)
+        then:
+        thrown(UnsupportedOperationException)
     }
 }

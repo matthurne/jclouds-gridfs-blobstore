@@ -84,17 +84,17 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public BlobMetadata blobMetadata(String container, String name) {
-        return null;  // TODO: implement
+        throw new UnsupportedOperationException("not currently supported by this provider");  // TODO: implement
     }
 
     @Override
     public void clearContainer(String container) {
-        // TODO: implement
+        clearContainer(container, ListContainerOptions.NONE);
     }
 
     @Override
     public void clearContainer(String container, ListContainerOptions options) {
-        // TODO: implement
+        throw new UnsupportedOperationException("not currently supported by this provider");  // TODO: implement
     }
 
     @Override
@@ -104,12 +104,12 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public long countBlobs(String container) {
-        return 0;  // TODO: implement
+        return countBlobs(container, ListContainerOptions.NONE);
     }
 
     @Override
     public long countBlobs(String container, ListContainerOptions options) {
-        return 0;  // TODO: implement
+        throw new UnsupportedOperationException("not currently supported by this provider");  // TODO: implement
     }
 
     @Override
@@ -134,7 +134,7 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public void createDirectory(String container, String directory) {
-        // TODO: implement
+        throw new UnsupportedOperationException("not currently supported by this provider");  // TODO: implement
     }
 
     @Override
@@ -144,12 +144,12 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public void deleteDirectory(String containerName, String name) {
-        // TODO: implement
+        throw new UnsupportedOperationException("not currently supported by this provider");  // TODO: implement
     }
 
     @Override
     public boolean directoryExists(String container, String directory) {
-        return false;  // TODO: implement
+        throw new UnsupportedOperationException("not currently supported by this provider");  // TODO: implement
     }
 
     @Override
@@ -188,17 +188,17 @@ public class GridFSBlobStore implements BlobStore {
 
     @Override
     public PageSet<? extends StorageMetadata> list() {
-        return null;  // TODO: implement
+        throw new UnsupportedOperationException("not currently supported by this provider");  // TODO: implement
     }
 
     @Override
     public PageSet<? extends StorageMetadata> list(String container) {
-        return null;  // TODO: implement
+        return list(container, ListContainerOptions.NONE);
     }
 
     @Override
     public PageSet<? extends StorageMetadata> list(String container, ListContainerOptions options) {
-        return null;  // TODO: implement
+        throw new UnsupportedOperationException("not currently supported by this provider");  // TODO: implement
     }
 
     @Override
