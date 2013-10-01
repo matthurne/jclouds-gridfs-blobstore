@@ -4,7 +4,7 @@ A JClouds BlobStore provider backed by MongoDB's GridFS.  Not all capabilities a
 
 # Usage
 
-First, add a dependency to your build file.  Releases will be published to [Bintray JCenter](https://bintray.com/bintray/jcenter).  See the [changelog](CHANGES.md) for the latest version.
+First, add a dependency to your build file.  Releases are published to [Bintray JCenter](https://bintray.com/bintray/jcenter).  See the [changelog](CHANGES.md) for the latest version.
 
 Gradle:
 
