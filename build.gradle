@@ -3,7 +3,8 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.3'
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:0.3"
+        classpath "com.github.townsfolk:gradle-release:1.2"
     }
 }
 
@@ -11,7 +12,6 @@ apply plugin: "java"
 apply plugin: "groovy"
 apply plugin: "idea"
 apply plugin: "maven-publish"
-apply plugin: "bintray"
 
 repositories {
     jcenter()
@@ -27,7 +27,6 @@ dependencies {
 sourceCompatibility = "1.7"
 
 group = "com.commercehub.jclouds"
-version = "1.0.0-SNAPSHOT"
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
@@ -52,6 +51,9 @@ publishing {
     }
 }
 
+apply plugin: "bintray"
+apply plugin: "release"
+
 bintray {
     user = project.hasProperty("bintrayUserName") ? bintrayUserName : null
     key = project.hasProperty("bintrayApiKey") ? bintrayApiKey : null
@@ -66,3 +68,5 @@ bintray {
     }
 }
 bintrayUpload.dependsOn build, sourceJar, javadocJar
+
+createReleaseTag.dependsOn bintrayUpload
