@@ -1,7 +1,6 @@
-jclouds-gridfs-blobstore
-========================
+# Overview
 
-A JClouds BlobStore provider backed by MongoDB's GridFS
+A JClouds BlobStore provider backed by MongoDB's GridFS.  Not all capabilities are supported, but there should be enough for common use cases.
 
 # Usage
 
