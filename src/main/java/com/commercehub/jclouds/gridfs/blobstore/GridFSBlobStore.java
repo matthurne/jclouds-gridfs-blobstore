@@ -73,22 +73,17 @@ public class GridFSBlobStore implements BlobStore {
     }
 
     @Override
-    public BlobStoreContext getContext() {
-        return context;
-    }
-
-    @Override
     public BlobBuilder blobBuilder(String name) {
         return blobUtils.blobBuilder().name(name);
     }
 
     @Override
-    public Set<? extends Location> listAssignableLocations() {
-        return locations.get();
+    public boolean blobExists(String container, String name) {
+        return parseGridFSIdentifier(container).connect(mongo).findOne(name) != null;
     }
 
     @Override
-    public PageSet<? extends StorageMetadata> list(String container) {
+    public BlobMetadata blobMetadata(String container, String name) {
         return null;  // TODO: implement
     }
 
@@ -103,18 +98,8 @@ public class GridFSBlobStore implements BlobStore {
     }
 
     @Override
-    public boolean directoryExists(String container, String directory) {
-        return false;  // TODO: implement
-    }
-
-    @Override
-    public void createDirectory(String container, String directory) {
-        // TODO: implement
-    }
-
-    @Override
-    public void deleteDirectory(String containerName, String name) {
-        // TODO: implement
+    public boolean containerExists(String container) {
+        return parseGridFSIdentifier(container).storeExists(mongo);
     }
 
     @Override
@@ -125,21 +110,6 @@ public class GridFSBlobStore implements BlobStore {
     @Override
     public long countBlobs(String container, ListContainerOptions options) {
         return 0;  // TODO: implement
-    }
-
-    @Override
-    public void deleteContainer(String container) {
-        parseGridFSIdentifier(container).dropStoreCollections(mongo);
-    }
-
-    @Override
-    public PageSet<? extends StorageMetadata> list() {
-        return null;  // TODO: implement
-    }
-
-    @Override
-    public boolean containerExists(String container) {
-        return parseGridFSIdentifier(container).storeExists(mongo);
     }
 
     @Override
@@ -163,13 +133,77 @@ public class GridFSBlobStore implements BlobStore {
     }
 
     @Override
+    public void createDirectory(String container, String directory) {
+        // TODO: implement
+    }
+
+    @Override
+    public void deleteContainer(String container) {
+        parseGridFSIdentifier(container).dropStoreCollections(mongo);
+    }
+
+    @Override
+    public void deleteDirectory(String containerName, String name) {
+        // TODO: implement
+    }
+
+    @Override
+    public boolean directoryExists(String container, String directory) {
+        return false;  // TODO: implement
+    }
+
+    @Override
+    public Blob getBlob(String container, String name) {
+        return getBlob(container, name, GetOptions.NONE);
+    }
+
+    @Override
+    public Blob getBlob(String container, String name, GetOptions options) {
+        GridFSIdentifier identifier = parseGridFSIdentifier(container);
+        if (!identifier.storeExists(mongo)) {
+            throw new ContainerNotFoundException(container, "could not find expected collections in database");
+        }
+        // TODO: support get options
+        if (options != null && (
+                options.getIfMatch() != null || options.getIfNoneMatch() != null ||
+                        options.getIfModifiedSince() != null || options.getIfUnmodifiedSince() != null ||
+                        !options.getRanges().isEmpty()
+        )) {
+            throw new IllegalArgumentException("Get options are not currently supported by this provider");
+        }
+        GridFS gridFS = identifier.connect(mongo); // TODO: cache
+        GridFSDBFile dbFile = gridFS.findOne(name);
+        if (dbFile == null) {
+            return null;
+        }
+        Blob blob = dbFileToBlob.apply(dbFile);
+        blob.getMetadata().setContainer(container);
+        return blob;
+    }
+
+    @Override
+    public BlobStoreContext getContext() {
+        return context;
+    }
+
+    @Override
+    public PageSet<? extends StorageMetadata> list() {
+        return null;  // TODO: implement
+    }
+
+    @Override
+    public PageSet<? extends StorageMetadata> list(String container) {
+        return null;  // TODO: implement
+    }
+
+    @Override
     public PageSet<? extends StorageMetadata> list(String container, ListContainerOptions options) {
         return null;  // TODO: implement
     }
 
     @Override
-    public boolean blobExists(String container, String name) {
-        return parseGridFSIdentifier(container).connect(mongo).findOne(name) != null;
+    public Set<? extends Location> listAssignableLocations() {
+        return locations.get();
     }
 
     @Override
@@ -193,40 +227,6 @@ public class GridFSBlobStore implements BlobStore {
         inputFile.setMetaData(fileMetadata);
         inputFile.save();
         return inputFile.getMD5();
-    }
-
-    @Override
-    public BlobMetadata blobMetadata(String container, String name) {
-        return null;  // TODO: implement
-    }
-
-    @Override
-    public Blob getBlob(String container, String name) {
-        return getBlob(container, name, GetOptions.NONE);
-    }
-
-    @Override
-    public Blob getBlob(String container, String name, GetOptions options) {
-        GridFSIdentifier identifier = parseGridFSIdentifier(container);
-        if (!identifier.storeExists(mongo)) {
-            throw new ContainerNotFoundException(container, "could not find expected collections in database");
-        }
-        // TODO: support get options
-        if (options != null && (
-                    options.getIfMatch() != null || options.getIfNoneMatch() != null ||
-                    options.getIfModifiedSince() != null || options.getIfUnmodifiedSince() != null ||
-                    !options.getRanges().isEmpty()
-                ) ) {
-            throw new IllegalArgumentException("Get options are not currently supported by this provider");
-        }
-        GridFS gridFS = identifier.connect(mongo); // TODO: cache
-        GridFSDBFile dbFile = gridFS.findOne(name);
-        if (dbFile == null) {
-            return null;
-        }
-        Blob blob = dbFileToBlob.apply(dbFile);
-        blob.getMetadata().setContainer(container);
-        return blob;
     }
 
     @Override
