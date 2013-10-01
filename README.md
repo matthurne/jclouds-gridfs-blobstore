@@ -4,9 +4,28 @@ A JClouds BlobStore provider backed by MongoDB's GridFS.  Not all capabilities a
 
 # Usage
 
-First, add a dependency to your build file.  See the [changelog](CHANGES.md) for the latest version.
+First, add a dependency to your build file.  Releases are published to [Bintray JCenter](https://bintray.com/bintray/jcenter).  See the [changelog](CHANGES.md) for the latest version.
 
-TODO: example
+Gradle:
+
+```groovy
+repositories {
+    jcenter()
+}
+dependencies {
+    compile "com.commercehub.jclouds:jclouds-gridfs-blobstore:1.0.0"
+}
+```
+
+Maven:
+
+```xml
+<dependency>
+    <groupId>com.commercehub.jclouds</groupId>
+    <artifactId>jclouds-gridfs-blobstore</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
 
 Next, obtain an instance of the `BlobStore`.
 
