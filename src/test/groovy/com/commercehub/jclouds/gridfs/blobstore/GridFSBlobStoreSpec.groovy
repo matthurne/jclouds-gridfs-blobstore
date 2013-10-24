@@ -1,3 +1,5 @@
+package com.commercehub.jclouds.gridfs.blobstore
+
 import com.mongodb.Mongo
 import com.mongodb.MongoClient
 import org.jclouds.Constants
@@ -12,6 +14,8 @@ import org.jclouds.blobstore.options.ListContainerOptions
 import org.jclouds.blobstore.options.PutOptions
 import spock.lang.Shared
 import spock.lang.Specification
+
+import static com.commercehub.jclouds.gridfs.blobstore.Constants.GRIDFS_URI_SCHEME
 
 class GridFSBlobStoreSpec extends Specification {
     private static final DB_NAME = this.simpleName
@@ -36,7 +40,7 @@ class GridFSBlobStoreSpec extends Specification {
         mongo.getDB(DB_NAME).dropDatabase()
         // TODO: use embedded mongo
         def overrides = new Properties()
-        overrides.setProperty(Constants.PROPERTY_ENDPOINT, "${host}:${port}");
+        overrides.setProperty(Constants.PROPERTY_ENDPOINT, "${GRIDFS_URI_SCHEME}://${host}:${port}");
         context = ContextBuilder.newBuilder("gridfs")
             .overrides(overrides)
             .buildView(BlobStoreContext)

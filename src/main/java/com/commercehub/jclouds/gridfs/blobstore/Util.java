@@ -7,6 +7,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.commercehub.jclouds.gridfs.blobstore.Constants.GRIDFS_URI_SCHEME;
+
 class Util {
     static ServerAddress parseServerAddress(String addressStr) throws UnknownHostException {
         String[] parts = addressStr.split(":");
@@ -15,9 +17,10 @@ class Util {
         return new ServerAddress(host, port);
     }
 
-    static List<ServerAddress> parseServerAddresses(String addressesStr) throws UnknownHostException {
+    static List<ServerAddress> parseServerAddresses(String addressesUri) throws UnknownHostException {
+        String addressesStr = removePrefixIfPresent(removePrefixIfPresent(addressesUri, GRIDFS_URI_SCHEME + ":"), "//");
         List<ServerAddress> addresses = new ArrayList<>();
-        for (String address : addressesStr.split("[;, ]")) {
+        for (String address : addressesStr.split("[;,]")) {
             addresses.add(parseServerAddress(address));
         }
         return addresses;
@@ -28,5 +31,9 @@ class Util {
         String dbName = parts[0];
         String bucket = parts.length > 1 ? parts[1] : GridFS.DEFAULT_BUCKET;
         return new GridFSIdentifier(dbName, bucket);
+    }
+
+    private static String removePrefixIfPresent(String str, String prefix) {
+        return str.startsWith(prefix) ? str.substring(prefix.length()) : str;
     }
 }

@@ -23,7 +23,7 @@ Maven:
 <dependency>
     <groupId>com.commercehub.jclouds</groupId>
     <artifactId>jclouds-gridfs-blobstore</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -31,7 +31,7 @@ Next, obtain an instance of the `BlobStore`.
 
 ```java
 Properties overrides = new Properties();
-overrides.setProperty(Constants.PROPERTY_ENDPOINT, "my_mongo_server:27017");
+overrides.setProperty(Constants.PROPERTY_ENDPOINT, "gridfs://my_mongo_server:27017");
 BlobStoreContext context = ContextBuilder.newBuilder("gridfs").overrides(overrides)
     .buildView(BlobStoreContext.class);
 BlobStore blobStore = context.getBlobStore();
@@ -50,4 +50,10 @@ Finally, close the context to allow it to properly clean up.
 
 ```java
 context.close();
+```
+
+To use a replica set, specify additional members as a comma or semicolon-separated list, like this:
+
+```java
+overrides.setProperty(Constants.PROPERTY_ENDPOINT, "gridfs://node1:27017;node2:27017;node3:27017");
 ```

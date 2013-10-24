@@ -9,6 +9,7 @@ import org.jclouds.blobstore.BlobStoreContext;
 import java.net.URI;
 import java.util.Collections;
 
+import static com.commercehub.jclouds.gridfs.blobstore.Constants.GRIDFS_URI_SCHEME;
 import static org.jclouds.reflect.Reflection2.typeToken;
 
 public class GridFSApiMetadata extends BaseApiMetadata {
@@ -33,7 +34,7 @@ public class GridFSApiMetadata extends BaseApiMetadata {
                 .credentialName("password")
                 .defaultIdentity("")
                 .defaultCredential("")
-                .defaultEndpoint("localhost:27017")
+                .defaultEndpoint(GRIDFS_URI_SCHEME + "://localhost:27017")
                 .documentation(URI.create("http://docs.mongodb.org/manual/core/gridfs/"))
                 .version(String.format("%d.%d", Mongo.getMajorVersion(), Mongo.getMinorVersion()))
                 .defaultProperties(GridFSApiMetadata.defaultProperties())
