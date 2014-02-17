@@ -1,5 +1,8 @@
 # Changelog
 
+*   1.2.0 (2014-02-17)
+    *   Upgrade JClouds to version 1.7.1, in order to support changes between Java versions 1.7.0_45 and 1.7.0_51.  See https://issues.apache.org/jira/browse/JCLOUDS-427
+
 *   1.0.1 (2013-10-24)
     *   Fix IllegalArgumentException when using an endpoint that includes dot characters
 
