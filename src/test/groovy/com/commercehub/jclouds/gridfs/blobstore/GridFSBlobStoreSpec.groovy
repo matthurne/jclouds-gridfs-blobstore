@@ -16,9 +16,6 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 class GridFSBlobStoreSpec extends Specification {
-    private static final HOST = "localhost"
-    private static final PORT = 27017
-    private static final CONNECTION_STRING = "gridfs://${HOST}:${PORT}"
     private static final DB_NAME = this.simpleName
     private static final BUCKET = "bk1"
     private static final CONTAINER = "${DB_NAME}/${BUCKET}"
@@ -35,24 +32,26 @@ class GridFSBlobStoreSpec extends Specification {
     private BlobStore blobStore
 
     def setupSpec() {
-        mongo = new MongoClient(HOST, PORT)
+        String host = "localhost"
+        int port = 27017
+        mongo = new MongoClient(host, port)
         mongo.getDB(DB_NAME).dropDatabase()
         // TODO: use embedded mongo
         def overrides = new Properties()
-        overrides.setProperty(Constants.PROPERTY_ENDPOINT, CONNECTION_STRING)
+        overrides.setProperty(Constants.PROPERTY_ENDPOINT, "mongodb://${host}:${port}");
         context = ContextBuilder.newBuilder("gridfs")
-                .overrides(overrides)
-                .buildView(BlobStoreContext)
+            .overrides(overrides)
+            .buildView(BlobStoreContext)
         blobStore = context.getBlobStore()
     }
 
     def cleanupSpec() {
+        if (context) {
+            context.close()
+        }
         if (mongo) {
             mongo.getDB(DB_NAME).dropDatabase()
             mongo.close()
-        }
-        if (context) {
-            context.close()
         }
     }
 
