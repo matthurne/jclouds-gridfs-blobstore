@@ -18,6 +18,10 @@ import spock.lang.Specification
 import static com.commercehub.jclouds.gridfs.blobstore.Constants.GRIDFS_URI_SCHEME
 
 class GridFSBlobStoreSpec extends Specification {
+    private static final HOST = "localhost"
+    private static final PORT = 27017
+    private static final GRIDFS_ENDPOINT = "${GRIDFS_URI_SCHEME}://${HOST}:${PORT}"
+    private static final STANDARD_CONNECTION_STRING = "mongodb://${HOST}:${PORT}"
     private static final DB_NAME = this.simpleName
     private static final BUCKET = "bk1"
     private static final CONTAINER = "${DB_NAME}/${BUCKET}"
@@ -28,36 +32,53 @@ class GridFSBlobStoreSpec extends Specification {
 
     @Shared
     private Mongo mongo
-    @Shared
+
     private BlobStoreContext context
-    @Shared
     private BlobStore blobStore
 
     def setupSpec() {
-        String host = "localhost"
-        int port = 27017
-        mongo = new MongoClient(host, port)
+        mongo = new MongoClient(HOST, PORT)
         mongo.getDB(DB_NAME).dropDatabase()
-        // TODO: use embedded mongo
-        def overrides = new Properties()
-        overrides.setProperty(Constants.PROPERTY_ENDPOINT, "${GRIDFS_URI_SCHEME}://${host}:${port}");
-        context = ContextBuilder.newBuilder("gridfs")
-            .overrides(overrides)
-            .buildView(BlobStoreContext)
-        blobStore = context.getBlobStore()
     }
 
     def cleanupSpec() {
-        if (context) {
-            context.close()
-        }
         if (mongo) {
             mongo.getDB(DB_NAME).dropDatabase()
             mongo.close()
         }
     }
 
+    def cleanup() {
+        if (context) {
+            context.close()
+        }
+    }
+
+    private void initBlobStore(String endpoint) {
+        // TODO: use embedded mongo
+        def overrides = new Properties()
+        overrides.setProperty(Constants.PROPERTY_ENDPOINT, endpoint);
+        context = ContextBuilder.newBuilder("gridfs")
+                .overrides(overrides)
+                .buildView(BlobStoreContext)
+        blobStore = context.getBlobStore()
+    }
+
+    private void initBlobStore() {
+        initBlobStore(STANDARD_CONNECTION_STRING)
+    }
+
+    def "can create blobStore with 'gridfs://' endpoint"() {
+        initBlobStore(GRIDFS_ENDPOINT)
+    }
+
+    def "can create blobStore with standard connection string endpoint"() {
+        initBlobStore(STANDARD_CONNECTION_STRING)
+    }
+
     def "can create and delete containers without create container options"() {
+        initBlobStore()
+
         assert !blobStore.containerExists(CONTAINER)
 
         expect:
@@ -69,6 +90,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "can create and delete containers with NONE create container options"() {
+        initBlobStore()
+
         assert !blobStore.containerExists(CONTAINER)
 
         expect:
@@ -80,6 +103,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "doesn't allow creating containers with public read"() {
+        initBlobStore()
+
         when:
         blobStore.createContainerInLocation(null, CONTAINER, CreateContainerOptions.Builder.publicRead())
 
@@ -89,6 +114,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "can create and delete blobs without put options"() {
+        initBlobStore()
+
         assert !blobStore.blobExists(CONTAINER, BLOB_NAME)
         // TODO: test put when container doesn't exist
         // TODO: test remove when container doesn't exist
@@ -108,6 +135,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "can create and delete blobs with multipart put options"() {
+        initBlobStore()
+
         assert !blobStore.blobExists(CONTAINER, BLOB_NAME)
 
         expect:
@@ -123,6 +152,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "doesn't allow put with null payload"() {
+        initBlobStore()
+
         when:
         blobStore.putBlob(CONTAINER, blobStore.blobBuilder(BLOB_NAME).build())
 
@@ -131,6 +162,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "doesn't allow put with non-multipart"() {
+        initBlobStore()
+
         when:
         def payload = blobStore.blobBuilder(BLOB_NAME).payload(PAYLOAD).build()
         blobStore.putBlob(CONTAINER, payload, PutOptions.Builder.multipart(false))
@@ -141,6 +174,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "get from non-existent container throws exception"() {
+        initBlobStore()
+
         when:
         blobStore.getBlob("containerDoesNotExist", "blobDoesNotExist")
 
@@ -149,11 +184,15 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "get non-existent blob returns null"() {
+        initBlobStore()
+
         expect:
         blobStore.getBlob(CONTAINER, "blobDoesNotExist") == null
     }
 
     def "can retrieve blob without get options"() {
+        initBlobStore()
+
         when:
         def payload = blobStore.blobBuilder(BLOB_NAME).payload(PAYLOAD).contentType(CONTENT_TYPE)
                 .userMetadata([user: "joe", type: "profilePicture"]).build()
@@ -200,6 +239,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "get options not supported"() {
+        initBlobStore()
+
         when:
         blobStore.getBlob(CONTAINER, BLOB_NAME, GetOptions.Builder.ifETagDoesntMatch(PAYLOAD_MD5))
 
@@ -232,6 +273,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "list not supported"() {
+        initBlobStore()
+
         when:
         blobStore.list()
         then:
@@ -249,6 +292,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "clearContainer not supported"() {
+        initBlobStore()
+
         when:
         blobStore.clearContainer(CONTAINER)
         then:
@@ -261,6 +306,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "directory operations not supported"() {
+        initBlobStore()
+
         when:
         blobStore.createDirectory(CONTAINER, "myDirectory")
         then:
@@ -278,6 +325,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "blobMetadata not supported"() {
+        initBlobStore()
+
         when:
         blobStore.blobMetadata(CONTAINER, BLOB_NAME)
         then:
@@ -285,6 +334,8 @@ class GridFSBlobStoreSpec extends Specification {
     }
 
     def "countBlobs not supported"() {
+        initBlobStore()
+
         when:
         blobStore.countBlobs(CONTAINER)
         then:

@@ -1,12 +1,7 @@
 package com.commercehub.jclouds.gridfs.blobstore;
 
 import com.google.common.base.Supplier;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
+import com.mongodb.*;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSDBFile;
 import com.mongodb.gridfs.GridFSInputFile;
@@ -32,10 +27,10 @@ import org.jclouds.providers.ProviderMetadata;
 
 import javax.inject.Inject;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static com.commercehub.jclouds.gridfs.blobstore.Constants.GRIDFS_URI_SCHEME;
 import static com.commercehub.jclouds.gridfs.blobstore.Util.parseGridFSIdentifier;
 import static com.commercehub.jclouds.gridfs.blobstore.Util.parseServerAddresses;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -60,15 +55,18 @@ public class GridFSBlobStore implements BlobStore {
         this.dbFileToBlobMetadata = dbFileToBlobMetadata;
         this.locations = checkNotNull(locations, "locations");
 
-        List<ServerAddress> addresses = parseServerAddresses(providerMetadata.getEndpoint());
-        List<MongoCredential> credentials = new ArrayList<>(); // TODO support credentials
-        MongoClientOptions options = MongoClientOptions.builder().build(); // TODO support options configuration
-        if (addresses.size() > 1) {
-            this.mongo = new MongoClient(addresses, credentials, options);
+        String endpoint = providerMetadata.getEndpoint();
+        if (endpoint.startsWith(GRIDFS_URI_SCHEME)) {
+            List<ServerAddress> addresses = parseServerAddresses(providerMetadata.getEndpoint());
+            if (addresses.size() > 1) {
+                this.mongo = new MongoClient(addresses);
+            } else {
+                // If only one address, assume we want single-node mode.
+                // You should always use multiple seeds with a replica set.
+                this.mongo = new MongoClient(addresses.get(0));
+            }
         } else {
-            // If only one address, assume we want single-node mode.
-            // You should always use multiple seeds with a replica set.
-            this.mongo = new MongoClient(addresses.get(0), credentials, options);
+            this.mongo = new MongoClient(new MongoClientURI(endpoint));
         }
     }
 

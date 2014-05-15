@@ -29,14 +29,28 @@ Maven:
 </dependency>
 ```
 
-Next, obtain an instance of the `BlobStore`.
+Next, obtain an instance of the `BlobStore` using a
+[standard MongoDB connection string](http://docs.mongodb.org/manual/reference/connection-string/):
 
 ```java
 Properties overrides = new Properties();
-overrides.setProperty(Constants.PROPERTY_ENDPOINT, "gridfs://my_mongo_server:27017");
+overrides.setProperty(Constants.PROPERTY_ENDPOINT, "mongodb://my_mongo_server:27017/?maxPoolSize=50");
 BlobStoreContext context = ContextBuilder.newBuilder("gridfs").overrides(overrides)
     .buildView(BlobStoreContext.class);
 BlobStore blobStore = context.getBlobStore();
+```
+
+You can also use a non-standard connection string (deprecated):
+
+```java
+overrides.setProperty(Constants.PROPERTY_ENDPOINT, "gridfs://my_mongo_server:27017");
+```
+
+To use a replica set when using a non-standard connection string, specify additional members as a comma or
+semicolon-separated list, like this:
+
+```java
+overrides.setProperty(Constants.PROPERTY_ENDPOINT, "gridfs://node1:27017;node2:27017;node3:27017");
 ```
 
 Then, use the blob store to put/get blobs.  The container is in the format **DB**[/**BUCKET**], where **DB** is the
@@ -53,10 +67,4 @@ Finally, close the context to allow it to properly clean up.
 
 ```java
 context.close();
-```
-
-To use a replica set, specify additional members as a comma or semicolon-separated list, like this:
-
-```java
-overrides.setProperty(Constants.PROPERTY_ENDPOINT, "gridfs://node1:27017;node2:27017;node3:27017");
 ```
