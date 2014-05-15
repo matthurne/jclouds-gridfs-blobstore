@@ -1,10 +1,12 @@
 # Overview
 
-A JClouds BlobStore provider backed by MongoDB's GridFS.  Not all capabilities are supported, but there should be enough for common use cases.
+A JClouds BlobStore provider backed by MongoDB's GridFS.  Not all capabilities are supported, but there should be
+enough for common use cases.
 
 # Usage
 
-First, add a dependency to your build file.  Releases are published to [Bintray JCenter](https://bintray.com/bintray/jcenter).  See the [changelog](CHANGES.md) for the latest version.
+First, add a dependency to your build file.  Releases are published to
+[Bintray JCenter](https://bintray.com/bintray/jcenter).  See the [changelog](CHANGES.md) for the latest version.
 
 Gradle:
 
@@ -37,7 +39,8 @@ BlobStoreContext context = ContextBuilder.newBuilder("gridfs").overrides(overrid
 BlobStore blobStore = context.getBlobStore();
 ```
 
-Then, use the blob store to put/get blobs.  The container is in the format **DB**[/**BUCKET**], where **DB** is the name of the database and **BUCKET** is the optional name of the GridFS bucket (which defaults to `fs`).
+Then, use the blob store to put/get blobs.  The container is in the format **DB**[/**BUCKET**], where **DB** is the
+name of the database and **BUCKET** is the optional name of the GridFS bucket (which defaults to `fs`).
 
 ```java
 blobStore.createContainerInLocation(null, "blobStore");
