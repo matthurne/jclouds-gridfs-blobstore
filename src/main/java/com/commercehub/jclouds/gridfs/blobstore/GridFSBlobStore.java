@@ -57,7 +57,7 @@ public class GridFSBlobStore implements BlobStore {
 
         String endpoint = providerMetadata.getEndpoint();
         if (endpoint.startsWith(GRIDFS_URI_SCHEME)) {
-            List<ServerAddress> addresses = parseServerAddresses(providerMetadata.getEndpoint());
+            List<ServerAddress> addresses = parseServerAddresses(endpoint);
             if (addresses.size() > 1) {
                 this.mongo = new MongoClient(addresses);
             } else {
