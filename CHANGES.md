@@ -3,6 +3,7 @@
 *   1.3.0 (2014-05-15)
     *   Add support for [standard MongoDB connection strings](http://docs.mongodb.org/manual/reference/connection-string/)
     *   Support for non-standard "gridfs://" connection strings is deprecated and may be removed in a future release
+    *   Upgrade groovy-all test dependency to version 2.3.0
     
 *   1.2.0 (2014-02-17)
     *   Upgrade JClouds to version 1.7.1, in order to support changes between Java versions 1.7.0_45 and 1.7.0_51.  See https://issues.apache.org/jira/browse/JCLOUDS-427
