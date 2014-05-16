@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
     compile "org.apache.jclouds:jclouds-blobstore:1.7.1"
-    compile "org.mongodb:mongo-java-driver:2.11.3"
+    compile "org.mongodb:mongo-java-driver:2.12.1"
     testCompile "org.codehaus.groovy:groovy-all:2.1.7"
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
 }
