@@ -68,3 +68,37 @@ Finally, close the context to allow it to properly clean up.
 ```java
 context.close();
 ```
+
+# Development
+
+## Releasing
+Releases are published to [Bintray JCenter](https://bintray.com/bintray/jcenter) via the
+[gradle-release](https://github.com/townsfolk/gradle-release) plugin and
+[gradle-bintray-plugin](https://github.com/bintray/gradle-bintray-plugin). To publish a new release, you need to be a
+member of the [commercehub-oss Bintray organization](https://bintray.com/commercehub-oss). You need to specify your
+Bintray username and API key when publishing. Your API key can be found on your
+[Bintray user profile page](https://bintray.com/profile/edit). You can put your username and API key in
+`~/.gradle/gradle.properties` like so:
+
+    bintrayUserName = johndoe
+    bintrayApiKey = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+Then, to publish the release:
+
+    ./gradlew release
+
+Alternatively, you can specify your Bintray username and API key on the command line:
+
+    ./gradlew -PbintrayUserName=johndoe -PbintrayApiKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef release
+
+The `release` task will prompt you to enter the version to be released, and will create and push a release tag
+accordingly. It will also push the release artifacts to Bintray.
+
+After publishing the release to Bintray, it's also nice to create a GitHub release. To do so:
+*   Visit the project's [releases](https://github.com/commercehub-oss/jclouds-gridfs-blobstore/releases) page
+*   Click the "Draft a new release" button
+*   Select the tag that was created by the Gradle `release` task
+*   Enter a title; typically, this should match the tag (e.g. "1.2.0")
+*   Enter a description of what changed since the previous release (see the
+    [changelog](https://github.com/commercehub-oss/jclouds-gridfs-blobstore/blob/master/CHANGES.md))
+*   Click the "Publish release" button
